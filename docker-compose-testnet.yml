@@ -1,0 +1,20 @@
+# docker compose file for vertcore/insight
+# this variant runs a single self-contained node
+# - health checking (note: may cause problems during initial sync)
+# - data persisted to docker volume
+# - its own vcoin instance to sync to network
+# - no scaling / load balancing
+version: "3.4"
+services:
+  insight:
+    image: jamesl22/insight-vtc
+    ports:
+      - "3001:80"
+    healthcheck:
+      test: curl -f http://localhost:3001/insight-vtc-api/status
+      start_period: 300s
+    volumes:
+      - vertcore:/data
+      - ${PWD}/vertcore-node-testnet.json:/data/vertcore-node.json
+volumes:
+  vertcore:

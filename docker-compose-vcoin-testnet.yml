@@ -1,0 +1,44 @@
+# docker compose file for vertcore/insight
+# this variant runs multiple nodes that sync from self-contained vcoin nodes
+# - health checking (note: may cause problems during initial sync)
+# - data persisted to docker volume
+# - each node runs its own vcoin instance to sync to network
+# - supports scaling (default: 5 nodes)
+# - load balances using traefik (sticky sessions required for socket.io)
+version: "3.4"
+services:
+  insight:
+    image: jamesl22/insight-vtc
+    deploy:
+      replicas: 5
+      labels:
+        traefik.port: "3001"
+        traefik.frontend.rule: "PathPrefix:/;"
+        traefik.backend.loadbalancer.sticky: "true"
+    networks:
+      - insight
+    healthcheck:
+      test: curl -f http://localhost:3001/insight-vtc-api/status
+      start_period: 300s
+    volumes:
+      - vertcore:/data
+      - ${PWD}/vertcore-node-testnet.json:/data/vertcore-node.json
+  loadbalancer:
+    image: traefik
+    command: --docker --docker.swarmmode --docker.watch --web --loglevel=DEBUG
+    ports:
+      - "80:80"
+      - "9090:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager
+    networks:
+      - insight
+networks:
+  insight:
+volumes:
+  vertcore:
+    name: '{{.Service.Name}}.{{.Task.Slot}}'

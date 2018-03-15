@@ -1,0 +1,62 @@
+# docker compose file for vertcore/insight
+# this variant runs multiple nodes that sync from a shared vertcoind instance
+# - health checking
+# - data persisted to docker volume
+# - each node connects to a shared vertcoind service to sync to network
+# - supports scaling (default: 5 nodes)
+# - load balances using traefik (sticky sessions required for socket.io)
+version: "3.4"
+services:
+  insight:
+    image: jamesl22/insight-vtc
+    deploy:
+      replicas: 5
+      labels:
+        traefik.port: "3001"
+        traefik.frontend.rule: "PathPrefix:/;"
+        traefik.backend.loadbalancer.sticky: "true"
+    networks:
+      - insight
+    depends_on:
+      - vertcoind
+    healthcheck:
+      test: curl -f http://localhost:3001/insight-vtc-api/status
+      start_period: 300s
+    volumes:
+      - vertcore:/data
+      - ${PWD}/vertcore-node-vertcoind.json:/data/vertcore-node.json
+  vertcoind:
+    image: lukechilds/vertcoind
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager
+    ports:
+      - "5888:5888"
+      - "5889:5889"
+      - "8332:8332"
+    volumes:
+      - vertcoind:/data
+    command: -rpcuser=middleware -rpcpassword=middleware -rpcallowip=0.0.0.0/0 -rpcbind=0.0.0.0 -rpcport=8332
+    networks:
+      - insight
+  loadbalancer:
+    image: traefik
+    command: --docker --docker.swarmmode --docker.watch --web --loglevel=DEBUG
+    ports:
+      - "80:80"
+      - "9090:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager
+    networks:
+      - insight
+networks:
+  insight:
+volumes:
+  vertcore:
+    name: '{{.Service.Name}}.{{.Task.Slot}}'
+  vertcoind:
