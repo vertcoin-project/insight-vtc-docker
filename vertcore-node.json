@@ -1,0 +1,30 @@
+{
+    "version": "5.0.0-beta.44",
+    "network": "livenet",
+    "port": 3001,
+    "services": [
+      "address",
+      "block",
+      "db",
+      "fee",
+      "header",
+      "mempool",
+      "p2p",
+      "timestamp",
+      "transaction",
+      "web",
+      "insight-vtc-api",
+      "insight-vtc-ui"
+    ],
+    "datadir": "/data",
+    "servicesConfig": {
+      "insight-vtc-api": {
+        "cwdRequirePath": "node_modules/insight-vtc-api",
+        "queryTimeout": 300
+      },
+      "insight-vtc-ui": {
+        "cwdRequirePath": "node_modules/insight-vtc-ui"
+      }
+    }
+  }
+  
