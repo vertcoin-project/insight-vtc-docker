@@ -1,15 +1,18 @@
 FROM node:8-slim
-MAINTAINER James Lovejoy <jameslovejoy1@gmail.com>
+LABEL maintainer James Lovejoy <jameslovejoy1@gmail.com>
 
 RUN apt update && apt install -y git build-essential python
-
-RUN adduser vertcore
+RUN adduser vertcore -u 9000
+RUN mkdir /data && chown vertcore:vertcore -R /data
+RUN mkdir /app && chown vertcore:vertcore -R /app
+COPY vertcore-node.json /data/vertcore-node.json
 
 USER vertcore
-WORKDIR /home/vertcore
-ADD run.sh /home/vertcore/run.sh
 
-RUN /home/vertcore/run.sh clone
-RUN /home/vertcore/run.sh install
+# install vertcore
+RUN npm config set prefix /app
+RUN npm install --production -g vertcoin-project/vertcore
 
-CMD ["/home/vertcore/vertcore/bin/vertcored"]
+# run vertcore node
+EXPOSE 3001
+CMD ["/app/bin/vertcored", "-c", "/data"]
