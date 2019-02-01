@@ -18,17 +18,14 @@
 
 # list of repos
 repos="vertcore-build vcoin vertcore-lib vertcore-message vertcore-p2p vertcore-node insight-vtc-api insight-vtc-ui vertcore"
-gitcollection="Cubey2019"
+gitcollection="vertcoin-project"
 
 # update package.json dependencies to point to local folders
 function updatepackagejson() {
     for repo in $repos
     do
-        local pattern1="\"$repo\":\\s\"[0-9a-zA-Z=^\\.\\-]\\+\""
-        local pattern2="\"$repo\":\\s\"$gitcollection/$repo\""
-        local replacewith="\"$repo\": \"file:../$repo\""
-        sed -i -e "s#$pattern1#$replacewith#g" ./package.json
-        sed -i -e "s#$pattern2#$replacewith#g" ./package.json
+        sed -i -e "s/git:\/\/github.com\/$gitcollection\/$repo.git/file:..\/$repo/g" ./package.json
+        sed -i -e "s/git:\/\/github.com\/$gitcollection\/$repo/file:..\/$repo/g" ./package.json        
     done
     echo "updated package.json dependencies"
 }
